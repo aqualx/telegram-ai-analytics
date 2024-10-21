@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <title>AI filtered News Articles</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-size: 1em;
+            color: #ebedf0;
+            background: #313131;
+        }
+        header {
+            padding: 20px;
+            text-align: center;
+            font-size: 3em;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        h1 {
+            font-size: 2.5em;
+            line-height: 2em;
+        }
+        table {
+            width: 98%;
+            max-width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            table-layout: fixed;
+            background-color: rgb(121, 120, 120);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        .table-container {
+            height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        thead {
+            background-color: gray;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+            word-wrap: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        th {
+            background-color: rgb(36, 63, 63);
+            color: white;
+            font-size: 1.1em;
+        }
+        td:nth-child(1), th:nth-child(1) {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        td:nth-child(2), th:nth-child(2) {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        td:nth-child(3), th:nth-child(3) {
+            max-width: 100px;
+            width: 100px;
+        }
+        td:nth-child(4), th:nth-child(4) {
+            max-width: 150px;
+            width: 150px;
+        }
+        td:nth-child(5), th:nth-child(5) {
+            max-width: 125px;
+            width: 125px;
+        }
+        td:nth-child(6), th:nth-child(6) {
+            max-width: 80px;
+            width: 80px;
+        }
+        td:nth-child(7), th:nth-child(7) {
+            max-width: 100px;
+            width: 100px;
+        }
+        tr:nth-child(odd) {
+            background-color: rgb(116, 116, 116);
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgb(161, 161, 161);
+            color: black !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="neon-blue">My <span id="fade">AI</span> Agregated News Channels<span id="fade">!</span></h1>
+    </div>
+    <div>
+        <label for="filter-country">Country: </label>
+        <select id="filter-country" onchange="fetchNews()">
+            <option value="">All</option>
+        </select>
+
+        <label for="filter-hashtag">Hashtag: </label>
+        <input type="text" id="filter-hashtag" placeholder="Hashtag" onchange="fetchNews()">
+        
+        <label for="filter-category">Category: </label>
+        <select id="filter-category" onchange="fetchNews()">
+            <option value="">All</option>
+        </select>
+
+        <label for="filter-priority">Priority: </label>
+        <select id="filter-priority" onchange="fetchNews()">
+            <option value="">All</option>
+        </select>
+        
+        <label for="filter-source">Source: </label>
+        <select id="filter-source" onchange="fetchNews()">
+            <option value="">All</option>
+        </select>
+
+        <label for="sort-by">Sort by: </label>
+        <select id="sort-by" onchange="fetchNews()">
+            <option value="date">Date</option>
+            <option value="priority">Priority</option>
+        </select>
+        
+        <label>Articles Loaded: <span id="articles-count">0</span></label>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Content</th>
+                <th>Description</th>
+                <th>Country</th>
+                <th>Hashtags</th>
+                <th>Date</th>
+                <th>Priority</th>
+                <th>Category</th>
+                <th>Source</th>
+            </tr>
+        </thead>
+        <tbody id="news-articles">
+            <!-- Dynamic content goes here -->
+        </tbody>
+    </table>
+
+    <script>
+        function formatDateTime(datetimeString) {
+            let date = new Date(datetimeString);
+
+            let year = date.getFullYear();
+            let month = String(date.getMonth() + 1).padStart(2, '0');
+            let day = String(date.getDate()).padStart(2, '0');
+            let hours = String(date.getHours()).padStart(2, '0');
+            let minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `${year}/${month}/${day} ${hours}:${minutes}`;
+        }
+
+        function fetchFilterOptions() {
+            fetch('/api/filter-options')
+                .then(response => response.json())
+                .then(data => {
+                    const countrySelect = document.getElementById('filter-country');
+                    countrySelect.innerHTML = '<option value="">All</option>';
+                    data.countries.forEach(country => {
+                        const option = document.createElement('option');
+                        option.value = country;
+                        option.textContent = country;
+                        countrySelect.appendChild(option);
+                    });
+
+                    const prioritySelect = document.getElementById('filter-priority');
+                    prioritySelect.innerHTML = '<option value="">All</option>';
+                    data.priorities.forEach(priority => {
+                        const option = document.createElement('option');
+                        option.value = priority;
+                        option.textContent = priority;
+                        prioritySelect.appendChild(option);
+                    });
+                    
+                    const categorySelect = document.getElementById('filter-category');
+                    categorySelect.innerHTML = '<option value="">All</option>';
+                    data.categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categorySelect.appendChild(option);
+                    });
+
+                    const sourceSelect = document.getElementById('filter-source');
+                    sourceSelect.innerHTML = '<option value="">All</option>';
+                    data.sources.forEach(source => {
+                        const option = document.createElement('option');
+                        option.value = source;
+                        option.textContent = source;
+                        sourceSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching filter options:', error);
+                });
+        }
+    
+        function fetchNews() {
+            const country = document.getElementById('filter-country').value;
+            const hashtag = document.getElementById('filter-hashtag').value;
+            const priority = document.getElementById('filter-priority').value;
+            const category = document.getElementById('filter-category').value;
+            const source = document.getElementById('filter-source').value;
+            const sortBy = document.getElementById('sort-by').value;
+
+            let url = `api/news?sort_by=${sortBy}`;
+            if (country) url += `&country=${country}`;
+            if (hashtag) url += `&hashtag=${hashtag}`;
+            if (priority) url += `&priority=${priority}`;
+            if (category) url += `&category=${category}`;
+            if (source) url += `&source=${source}`;
+
+            fetch(url)
+                .then(response => {
+                    console.log('Response:', response);
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Data received:', data);
+
+                    const tableBody = document.getElementById('news-articles');
+                    tableBody.innerHTML = '';
+
+                    if (Array.isArray(data)) {
+                        data.forEach(article => {
+                            const row = `<tr>
+                                <td>${article.content}</td>
+                                <td>${article.description}</td>
+                                <td>${article.country}</td>
+                                <td>${article.hashtags}</td>
+                                <td>${formatDateTime(article.date)}</td>
+                                <td>${article.priority}</td>
+                                <td>${article.category}</td>
+                                <td>${article.source}</td>
+                            </tr>`;
+                            tableBody.innerHTML += row;
+                        });
+
+                        document.getElementById('articles-count').textContent = data.length;
+                    } else {
+                        console.error('Data is not an array:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching the news articles:', error);
+                });
+        }
+
+        window.onload = function() {
+            fetchFilterOptions();
+            fetchNews();
+        }
+    </script>
+</body>
+</html>
