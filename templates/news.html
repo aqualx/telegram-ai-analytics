@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/neon_styles.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/news.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <title>My News Portal</title>
+</head>
+<body>
+    <div>
+        <header class="neon-blue"> My <span class="neon-purple" id="trav">AI</span> Aggregated Telegram News Channels<span class="neon-purple">!</span></header>
+        <div class="filter-bar">
+            <span>
+                <label for="filter-country">Country:</label>
+                <select id="filter-country" onchange="fetchNews()">
+                    <option value="">All</option>
+                </select>
+            </span>
+            <span>
+                <label for="filter-hashtag">Hashtag:</label>
+                <input type="text" id="filter-hashtag" placeholder="Hashtag" onchange="fetchNews()">
+                </select>
+            </span>
+            <span>
+                <label for="filter-category">Category:</label>
+                <select id="filter-category" onchange="fetchNews()">
+                    <option value="">All</option>
+                </select>
+            </span>
+            <span>
+                <label for="filter-priority">Priority:</label>
+                <select id="filter-priority" onchange="fetchNews()">
+                    <option value="">All</option>
+                </select>
+            </span>
+            <span>
+                <label for="filter-source">Source:</label>
+                <select id="filter-source" onchange="fetchNews()">
+                    <option value="">All</option>
+                </select>
+            </span>
+            <span>
+                <label for="filter-fromDate">Date Range:</label>
+                <select id="filter-fromDate" onchange="fetchNews()">
+                    <option value="1">Last 1 day</option>
+                    <option value="2">Last 2 days</option>
+                    <option value="7">Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="365">Last 1 year</option>
+                    <option value="all">All</option>
+                </select>
+            </span>
+            <span style="display: none;">
+                <label for="sort-by" hidden="true">Sort by: </label>
+                <select id="sort-by" onchange="fetchNews()" hidden>
+                    <option value="date">Date</option>
+                </select>
+            </span>
+            <span>
+                <label>Loaded:</label>
+                <label id="articles-count" style="font-size: 130%;">0</label>
+            </span>
+        </div>
+        <div id="news-posts">
+            <!-- Dynamic content goes here -->
+        </div>
+    </div>
+
+    <script>
+        function getPriorityIcon(priority) {
+            let icon = '';
+            if (priority === 4 || priority === 5) {
+                icon = '<i class="fas fa-exclamation-triangle" style="color: red;"></i>'; // Red for high priority
+            } else if (priority === 3) {
+                icon = '<i class="fas fa-exclamation-circle" style="color: orange;"></i>'; // Orange for medium priority
+            } else if (priority === 1 || priority === 2) {
+                icon = '<i class="fas fa-info-circle" style="color: green;"></i>'; // Green for low priority
+            }
+            return icon;
+        }
+
+        function calculateDateRange(days) {
+            const today = new Date();
+            const pastDate = new Date(today);
+            pastDate.setDate(today.getDate() - days);
+            return pastDate.toISOString();
+        }
+
+        function formatDateTime(datetimeString) {
+            let date = new Date(datetimeString);
+
+            let year = date.getFullYear();
+            let month = date.toLocaleString('default', { month: 'long' });
+            let day = String(date.getDate());
+            let hours = String(date.getHours());
+            let minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `${month} ${day} at ${hours}:${minutes}`;
+        }
+
+        function getPriorities() {
+            const prioritySelect = document.getElementById('filter-priority');
+            const priorityMapping = {};
+
+            Array.from(prioritySelect.options).forEach(option => {
+                priorityMapping[option.value] = option.textContent;
+            });
+            return priorityMapping;
+        }
+
+        function toggleCollapse(element) {
+            const content = element.nextElementSibling;
+            const arrow = element.querySelector('.collapsible-arrow');
+            
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+            } else {
+                content.style.display = 'block';
+            }
+            
+            element.classList.toggle('open');
+        }
+
+        function fetchFilterOptions() {
+            fetch('/api/filter-options')
+                .then(response => response.json())
+                .then(data => {
+                    const countrySelect = document.getElementById('filter-country');
+                    countrySelect.innerHTML = '<option value="">All</option>';
+                    data.countries.forEach(country => {
+                        const option = document.createElement('option');
+                        option.value = country;
+                        option.textContent = country;
+                        countrySelect.appendChild(option);
+                    });
+
+                    const prioritySelect = document.getElementById('filter-priority');
+                    prioritySelect.innerHTML = '<option value="">All</option>';
+                    for (key in data.priorities) {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = data.priorities[key];
+                        prioritySelect.appendChild(option);
+                    }
+                    
+                    const categorySelect = document.getElementById('filter-category');
+                    categorySelect.innerHTML = '<option value="">All</option>';
+                    data.categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categorySelect.appendChild(option);
+                    });
+
+                    const sourceSelect = document.getElementById('filter-source');
+                    sourceSelect.innerHTML = '<option value="">All</option>';
+                    data.sources.forEach(source => {
+                        const option = document.createElement('option');
+                        option.value = source;
+                        option.textContent = source;
+                        sourceSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching filter options:', error);
+                });
+        }
+
+        function fetchNews() {
+            const country = document.getElementById('filter-country').value;
+            const hashtag = document.getElementById('filter-hashtag').value;
+            const priority = document.getElementById('filter-priority').value;
+            const category = document.getElementById('filter-category').value;
+            const source = document.getElementById('filter-source').value;
+            const sortBy = document.getElementById('sort-by').value;
+            const fromDate = document.getElementById("filter-fromDate").value;
+
+            let url = `api/news?sort_by=${sortBy}`;
+            if (country) url += `&country=${country}`;
+            if (hashtag) url += `&hashtag=${hashtag}`;
+            if (priority) url += `&priority=${priority}`;
+            if (category) url += `&category=${category}`;
+            if (source) url += `&source=${source}`;
+            if (fromDate) url += `&fromDate=${calculateDateRange(parseInt(fromDate))}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const postContainer = document.getElementById('news-posts');
+                    postContainer.innerHTML = '';
+
+                    const priorities = getPriorities();
+                    if (Array.isArray(data)) {
+                        data.forEach(article => {
+
+                            const priorityWithIcon = getPriorityIcon(article.priority);
+                            const post = `
+                                <div class="post-card">
+                                    <div class="post-header">
+                                        <h2><span class="post-priority" title=${priorities[article.priority]}>${priorityWithIcon}</span> ${article.category} / <i>${article.country}</i></h2>
+                                        <h3><span>"${article.source}", ${formatDateTime(article.date)}</span></h3>
+                                    </div>
+                                    <div class="post-body">${article.description}</div>
+                                    <div class="collapsible" onclick="toggleCollapse(this)">
+                                        <span class="collapsible-arrow">Source ▶</span>
+                                    </div>
+                                    <div class="collapsible-content">
+                                        <div class="post-body">
+                                            ${article.content}
+                                        </div>
+                                    </div>
+                                    <div class="post-footer">
+                                        <span><a href="#">${article.hashtags}</a><span>
+                                    </div>
+                                </div>`;
+                            postContainer.innerHTML += post;
+                        });
+                    } else {
+                        console.error('Data is not an array:', data);
+                    }
+
+                    document.getElementById('articles-count').textContent = data.length;
+                })
+                .catch(error => {
+                    console.error('Error fetching news:', error);
+                });
+        }
+
+        window.onload = function() {
+            fetchFilterOptions();
+            fetchNews();
+        }
+    </script>
+</body>
+</html>

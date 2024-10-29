@@ -1,0 +1,132 @@
+
+html, body {
+    font-family: 'Roboto', sans-serif;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-size: 1em;
+    color: #ebedf0;
+    background: #18191a;
+}
+
+header {
+    padding: 20px;
+    text-align: center;
+    font-size: 3em;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+}
+h3 {
+    font-size: 0.9em;
+    line-height: 0.8em;
+    color: #b0b3b8;
+}
+.filter-bar {
+    display: grid;
+    position: sticky;
+    top: 110px;
+    width: 20%;
+    float: left;
+    z-index: 999;
+    background-color: #18191a;
+    padding: 10px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    gap: 10px; 
+}
+.filter-bar select, 
+.filter-bar input, 
+.filter-bar label {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+.filter-bar label {
+    margin-bottom: 5px;
+}
+#filter-country, 
+#filter-hashtag, 
+#filter-category, 
+#filter-priority {
+    grid-column: span 1;
+}
+#filter-source, 
+#filter-fromDate, 
+#sort-by, 
+#articles-count {
+    grid-column: span 2;
+}
+.post-card {
+    width: 50%;
+    margin: 20px auto;
+    background-color: #242526;
+    color: #d9dbe0;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.post-header {
+    font-family: 'Lato', sans-serif;
+    text-align: justify;
+    color: #d9dbe0;
+    margin-bottom: 10px;
+}
+.post-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+}
+.post-date {
+    font-size: 0.9em;
+    color: #bbb;
+}
+.post-body {
+    margin-top: 10px;
+    line-height: 1.6;
+}
+.post-footer {
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #bbb;
+}
+.post-footer a {
+    color: #00aaff;
+    text-decoration: none;
+    cursor: pointer;
+}
+.post-footer a:hover {
+    text-decoration: underline;
+}
+.post-priority i {
+    margin-right: 5px;
+    opacity: 0.4;
+    font-size: 0.8em;
+}
+.collapsible {
+    cursor: pointer;
+    padding: 7px;
+    text-align: left;
+    font-size: 1.1em;
+}
+.collapsible-content {
+    display: none;
+    margin-top: 10px;
+}
+.collapsible-arrow {
+    margin-left: 10px;
+    transition: transform 0.3s ease;
+}
+.collapsible.open .collapsible-arrow {
+    transform: rotate(90deg);
+}
+select, input {
+    background-color: #494949;
+    color: #fff;
+    padding: 5px;
+    border-radius: 5px;
+}
+select:hover, input:hover {
+    background-color: #606060;
+}

@@ -1,7 +1,7 @@
 import asyncio
 from sqlite3 import Connection, IntegrityError
 from typing import Any, List
-import bcolors
+from bcolors import BColors
 
 class DbHelpers:
     table_name = 'messages'
@@ -35,7 +35,7 @@ class DbHelpers:
                 insert_sql = f"INSERT INTO {DbHelpers.table_name} (chat_id, message_id, user_id, date, content) VALUES (?, ?, ?, ?, ?);"
                 c.executemany(insert_sql, to_insert)
             except IntegrityError:
-                print(f'{bcolors.FAIL}An error occurred{bcolors.ENDC}')            
+                print(f'{BColors.FAIL}An error occurred{BColors.ENDC}')            
 
         db.commit()
 
@@ -44,27 +44,35 @@ class DbHelpers:
         await asyncio.sleep(0)
         c = db.cursor()
 
-        for message in messages:
-            message_id  = message['message_id']
-            priority    = message.get('priority', None)
-            country     = message.get('country', None)
-            category    = message.get('category', None)
-            hashtags    = message.get('hashtags', None)
-            description = message.get('thoughts', None)
-            
-            data = c.execute(f"SELECT * FROM {DbHelpers.table_name} WHERE message_id=? AND chat_id=?", (message_id, chat_id)).fetchone()
-            if data is not None:
-                sql_update = f"UPDATE {DbHelpers.table_name} SET " + \
-                            "priority=?, country=?, category=?, hashtags=?, description=?, analyzed=1 " + \
-                            "WHERE chat_id=? AND message_id=?;"
-                c.execute(sql_update, (priority, country, category, hashtags, description, chat_id, message_id))
-            else:
-                print('No record to update')
+        try:
+            for message in messages:
+                message_id  = message['message_id']
+                priority    = message.get('priority', None)
+                country     = message.get('country', None)
+                category    = message.get('category', None)
+                hashtags    = message.get('hashtags', None)
+                description = message.get('summary', None)
+                
+                data = c.execute(f"SELECT * FROM {DbHelpers.table_name} WHERE message_id=? AND chat_id=?", (message_id, chat_id)).fetchone()
+                if data is not None:
+                    sql_update = f"UPDATE {DbHelpers.table_name} SET " + \
+                                "priority=?, country=?, category=?, hashtags=?, description=?, analyzed=1 " + \
+                                "WHERE chat_id=? AND message_id=?;"
+                    c.execute(sql_update, (priority, country, category, hashtags, description, chat_id, message_id))
+                else:
+                    print('No record to update')
+        except Exception as ex:
+            print(f"{BColors.FAIL}Error occured during update: {ex}{BColors.ENDC}")
 
         db.commit()
 
     @staticmethod
     async def read_all_users(db: Connection):
         await asyncio.sleep(0)
-        c = db.cursor()
-        return  [row[0] for row in c.execute(f"SELECT chat_id FROM {DbHelpers.table_name} WHERE 1=1;").fetchall()]
+        result = []
+        try:
+            c = db.cursor()
+            result = [row[0] for row in c.execute(f"SELECT chat_id FROM {DbHelpers.table_name} WHERE 1=1;").fetchall()]
+        except Exception as ex:
+            print(f"{BColors.FAIL}Error reading users from DB: {ex}{BColors.ENDC}")
+        return result

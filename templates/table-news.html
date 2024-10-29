@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}" />
-    <title>AI filtered News Articles</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/neon_styles.css') }}" />
+    <title>My News Table portal</title>
     <style>
         html, body {
             height: 100%;
@@ -29,24 +29,11 @@
         }
         table {
             width: 98%;
-            max-width: 100%;
             margin: 20px auto;
             border-collapse: collapse;
             table-layout: fixed;
-            background-color: rgb(121, 120, 120);
+            background-color: #797878;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        }
-        .table-container {
-            height: 300px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        thead {
-            background-color: gray;
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 1;
         }
         th, td {
             border: 1px solid black;
@@ -57,50 +44,46 @@
             text-overflow: ellipsis;
         }
         th {
-            background-color: rgb(36, 63, 63);
+            text-align: center;
+            background-color: #243f3f;
             color: white;
             font-size: 1.1em;
         }
-        td:nth-child(1), th:nth-child(1) {
+        #summary {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        td:nth-child(2), th:nth-child(2) {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        #date {
+            max-width: 115px;
+            width: 115px;
         }
-        td:nth-child(3), th:nth-child(3) {
+        #category {
             max-width: 100px;
             width: 100px;
         }
-        td:nth-child(4), th:nth-child(4) {
-            max-width: 150px;
-            width: 150px;
+        #country, #priority {
+            max-width: 65px;
+            width: 65px;
         }
-        td:nth-child(5), th:nth-child(5) {
-            max-width: 125px;
-            width: 125px;
-        }
-        td:nth-child(6), th:nth-child(6) {
+        #hashtags, #source {
             max-width: 80px;
             width: 80px;
         }
-        td:nth-child(7), th:nth-child(7) {
-            max-width: 100px;
-            width: 100px;
+        #originalContent {
+            width: 35%;
         }
         tr:nth-child(odd) {
-            background-color: rgb(116, 116, 116);
+            background-color: #747474;
             color: white;
         }
-
         tr:nth-child(even) {
-            background-color: rgb(161, 161, 161);
-            color: black !important;
+            background-color: #a1a1a1;
+            color: black;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="neon-blue">My <span id="fade">AI</span> Agregated News Channels<span id="fade">!</span></h1>
+         <h1 class="neon-blue"> My <span class="neon-purple" id="trav">AI</span> Agregated Telegram News Channels<span class="neon-purple">!</span></h1>
     </div>
     <div>
         <label for="filter-country">Country: </label>
@@ -126,6 +109,16 @@
             <option value="">All</option>
         </select>
 
+        <label for="filter-fromDate">Filter by Date Range:</label>
+        <select id="filter-fromDate" onchange="fetchNews()">
+            <option value="1">Last 1 day</option>
+            <option value="2">Last 2 days</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="365">Last 1 year</option>
+            <option value="all">All</option>
+        </select>
+
         <label for="sort-by">Sort by: </label>
         <select id="sort-by" onchange="fetchNews()">
             <option value="date">Date</option>
@@ -134,18 +127,17 @@
         
         <label>Articles Loaded: <span id="articles-count">0</span></label>
     </div>
-
     <table>
         <thead>
             <tr>
-                <th>Content</th>
-                <th>Description</th>
-                <th>Country</th>
-                <th>Hashtags</th>
-                <th>Date</th>
-                <th>Priority</th>
-                <th>Category</th>
-                <th>Source</th>
+                <th id="summary">Summary</th>
+                <th id="date">Date</th>
+                <th id="category">Category</th>
+                <th id="country">Country</th>
+                <th id="priority">Priority</th>
+                <th id="hashtags">Hashtags</th>
+                <th id="source">Source</th>
+                <th id="originalContent">Original content</th>
             </tr>
         </thead>
         <tbody id="news-articles">
@@ -154,6 +146,13 @@
     </table>
 
     <script>
+        function calculateDateRange(days) {
+            const today = new Date();
+            const pastDate = new Date(today);
+            pastDate.setDate(today.getDate() - days);
+            return pastDate.toISOString();
+        }
+
         function formatDateTime(datetimeString) {
             let date = new Date(datetimeString);
 
@@ -166,8 +165,18 @@
             return `${year}/${month}/${day} ${hours}:${minutes}`;
         }
 
+        function getPriorities() {
+            const prioritySelect = document.getElementById('filter-priority');
+            const priorityMapping = {};
+
+            Array.from(prioritySelect.options).forEach(option => {
+                priorityMapping[option.value] = option.textContent;
+            });
+            return priorityMapping;
+        }
+
         function fetchFilterOptions() {
-            fetch('/api/filter-options')
+            fetch('../api/filter-options')
                 .then(response => response.json())
                 .then(data => {
                     const countrySelect = document.getElementById('filter-country');
@@ -181,12 +190,12 @@
 
                     const prioritySelect = document.getElementById('filter-priority');
                     prioritySelect.innerHTML = '<option value="">All</option>';
-                    data.priorities.forEach(priority => {
+                    for (key in data.priorities) {
                         const option = document.createElement('option');
-                        option.value = priority;
-                        option.textContent = priority;
+                        option.value = key;
+                        option.textContent = data.priorities[key];
                         prioritySelect.appendChild(option);
-                    });
+                    }
                     
                     const categorySelect = document.getElementById('filter-category');
                     categorySelect.innerHTML = '<option value="">All</option>';
@@ -218,13 +227,15 @@
             const category = document.getElementById('filter-category').value;
             const source = document.getElementById('filter-source').value;
             const sortBy = document.getElementById('sort-by').value;
+            const fromDate = document.getElementById("filter-fromDate").value;
 
-            let url = `api/news?sort_by=${sortBy}`;
+            let url = `../api/news?sort_by=${sortBy}`;
             if (country) url += `&country=${country}`;
             if (hashtag) url += `&hashtag=${hashtag}`;
             if (priority) url += `&priority=${priority}`;
             if (category) url += `&category=${category}`;
             if (source) url += `&source=${source}`;
+            if(fromDate) url +=`&fromDate=${calculateDateRange(parseInt(fromDate))}`;
 
             fetch(url)
                 .then(response => {
@@ -242,17 +253,32 @@
                     const tableBody = document.getElementById('news-articles');
                     tableBody.innerHTML = '';
 
+                    const priorities = getPriorities();
                     if (Array.isArray(data)) {
                         data.forEach(article => {
+                            var content = null;
+                            if(article.content != 0 && article.description != null) {
+                                content = article.content.substring(0, Math.min(article.description.length, article.content.length));
+                                if(content.length < article.content.length) {
+                                    content += "...";
+                                }
+                            } else {
+                                content = article.content.substring(0, Math.min(200, article.content.length));
+                            }
+                            var priority = null;
+                            if(article.priority != null) {
+                                priority = priorities[article.priority]
+                            }
+                            
                             const row = `<tr>
-                                <td>${article.content}</td>
                                 <td>${article.description}</td>
-                                <td>${article.country}</td>
-                                <td>${article.hashtags}</td>
                                 <td>${formatDateTime(article.date)}</td>
-                                <td>${article.priority}</td>
                                 <td>${article.category}</td>
+                                <td>${article.country}</td>
+                                <td>${priority}</td>
+                                <td>${article.hashtags}</td>
                                 <td>${article.source}</td>
+                                <td title="${article.content}">${content}</td>
                             </tr>`;
                             tableBody.innerHTML += row;
                         });

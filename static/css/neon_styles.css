@@ -12,11 +12,6 @@
   -webkit-transform: rotate(-3deg);
   transform: rotate(-3deg);
 }
-body {
-  margin: 70px;
-  background: #313131;
-  font-size: 50px;
-}
 #title {
   font-size: 110px;
 }
@@ -44,7 +39,7 @@ body {
 }
 .neon-purple {
   font-family: 'League Script', Helvetica, Arial, sans-serif;
-  font-size: 100px;
+  font-size: 120%;
   margin: 0 auto;
   text-align: center;
   color: #ccf;
