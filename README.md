@@ -1,6 +1,6 @@
 # telegram-ai-analytics
 
-This is a Python application that aggregates news from Telegram public news channels, analyzes them using a local language model (LM) [Gemma2](https://ollama.com/library/gemma2) via [Open WebUI](https://github.com/open-webui/open-webui) + [Ollama](https://github.com/ollama/ollama)", and outputs the result through a web API to a local web page with various filtering methods.
+This is a Python application that aggregates news from Telegram public news channels, analyzes them using a local language model (LM) [Gemma2](https://ollama.com/library/gemma2) via [Open WebUI](https://github.com/open-webui/open-webui) + [Ollama](https://github.com/ollama/ollama), and outputs the result through a web API to a local web page with various filtering methods.
 
 ## Demo video
 
