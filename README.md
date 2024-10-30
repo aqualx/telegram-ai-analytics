@@ -52,9 +52,10 @@ The web page displays the latest news articles aggregated from public Telegram c
 
 ![Facebook-like view](./docs/imgs/web-post-view.png "Facebook-like view")
 ![Table view](./docs/imgs/web-table-view.png "Table view")
+
 ### Web API
 
-The application exposes a RESTful web API that provides access to the aggregated news data. The API endpoints are documented using Swagger UI.
+The application exposes a RESTful Web API that provides access to the aggregated news data.
 
 ## Contributing
 
